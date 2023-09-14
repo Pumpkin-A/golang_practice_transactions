@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/myGolangProject/Nastya/generator"
+	"myGolangProject/Nastya/generator"
 )
 
 type jsonResponse struct {
