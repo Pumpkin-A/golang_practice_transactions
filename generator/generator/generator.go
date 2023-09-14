@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/myGolangProject/Nastya/models"
+	"myGolangProject/Nastya/models"
 
 	"github.com/gofrs/uuid"
 )
