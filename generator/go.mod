@@ -1,4 +1,4 @@
-module myGolangProject/Nastya
+module github.com/myGolangProject/Nastya
 
 go 1.20
 

@@ -11,6 +11,6 @@ type Transaction struct {
 	Type        string    `json:"type"`
 	Date        time.Time `json:"date"`
 	Amount      int       `json:"amount"`
-	SenderID    int       `json:"sender id"`
-	RecipientID int       `json:"recipient id"`
+	SenderID    int       `json:"senderId"`
+	RecipientID int       `json:"recipientId"`
 }

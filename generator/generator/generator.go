@@ -2,8 +2,9 @@ package generator
 
 import (
 	"math/rand"
-	"myGolangProject/Nastya/models"
 	"time"
+
+	"github.com/myGolangProject/Nastya/models"
 
 	"github.com/gofrs/uuid"
 )
@@ -13,7 +14,7 @@ type Settings struct {
 	AmountMax int `json:"max"`
 }
 
-var transactionTypes = []string{"cash payment", "payment by card", "sbp"} //интерфейс для каждого типа оплаты с последующими ручками???
+var transactionTypes = []string{"cash", "card", "sbp"} //интерфейс для каждого типа оплаты с последующими ручками???
 
 func ChangeSettingsAmount(min, max int) {
 	currentSettings.AmountMin = min
@@ -32,7 +33,7 @@ func Generate(count int) []models.Transaction {
 	for i := 0; i < count; i++ {
 		transactions = append(transactions, models.Transaction{
 			UUID: uuid,
-			Type: transactionTypes[rand.Intn(2)],
+			Type: transactionTypes[rand.Intn(3)],
 			Date: time.Now(),
 			Amount: currentSettings.AmountMin +
 				rand.Intn(currentSettings.AmountMax-currentSettings.AmountMin+1), //сумма
