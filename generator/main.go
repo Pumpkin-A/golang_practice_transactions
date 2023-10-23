@@ -2,20 +2,38 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"myGolangProject/Nastya/generator"
+	"myGolangProject/Nastya/models"
 )
 
 type jsonResponse struct {
 	Text string `json:"-_-"`
 }
 
+func serviceUnavailable(w http.ResponseWriter) bool {
+	if rand.Int()%2 == 0 {
+		sr := &jsonResponse{"Service Unavailable(((("}
+		jr, _ := json.Marshal(sr)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write(jr)
+		return true
+	}
+	return false
+}
+
 func changeSettings(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+	if serviceUnavailable(w) {
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("reading the body error", err)
 		return
@@ -51,7 +69,26 @@ func changeSettings(w http.ResponseWriter, r *http.Request) {
 	w.Write(jr)
 }
 
+func xUserAccess(w http.ResponseWriter, r *http.Request) bool {
+	ua := r.Header.Get("X-User")
+	if !slices.Contains(models.GlobalConfig.AvailableXUsers, ua) {
+		sr := &jsonResponse{"Unauthorized"}
+		jr, _ := json.Marshal(sr)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write(jr)
+		return true
+	}
+	return false
+}
+
 func showTransactions(w http.ResponseWriter, r *http.Request) {
+	if serviceUnavailable(w) {
+		return
+	}
+
+	if xUserAccess(w, r) {
+		return
+	}
 	count, err := strconv.Atoi(r.URL.Query().Get("count"))
 	if count < 1 || err != nil {
 		sr := &jsonResponse{"Not found((("}

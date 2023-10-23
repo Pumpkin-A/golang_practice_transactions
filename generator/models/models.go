@@ -14,3 +14,11 @@ type Transaction struct {
 	SenderID    int       `json:"senderId"`
 	RecipientID int       `json:"recipientId"`
 }
+
+type Config struct {
+	AvailableXUsers []string
+}
+
+var GlobalConfig = Config{
+	AvailableXUsers: []string{"Nastya", "Maxim", "clown"},
+}
