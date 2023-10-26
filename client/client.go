@@ -1,22 +1,14 @@
 package main
 
-//сделать запрос на сервер и вывести json в командную строку +
-//подключиться к базе данных +
-//запрос к бд +
-//получать один json и переводить его в структуру +
-//научиться делать insert запрос с исскуственными данными +
-//вводить полученные данные в базу данных +
-// Transaction сделать модулем и импортировать из models
-
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
+	generatorClient "go/transaction/client/generatorClient"
+	"go/transaction/client/models"
 	"log"
 	"net/http"
-	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 )
 
@@ -28,36 +20,45 @@ const (
 	dbname   = "postgres"
 )
 
-type Transaction struct {
-	UUID        uuid.UUID `json:"uuid"`
-	Type        string    `json:"type"`
-	Date        time.Time `json:"date"`
-	Amount      int       `json:"amount"`
-	SenderID    int       `json:"sender id"`
-	RecipientID int       `json:"recipient id"`
+func customHandler(w http.ResponseWriter, r *http.Request) error {
+	xUserHeader := r.Header.Get("X-User")
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	if err != nil {
+		log.Println("db open error", err)
+		return err
+	}
+	defer db.Close()
+
+	transactionsData, err := generatorClient.GetTransaction(xUserHeader)
+	if err != nil {
+		log.Println("getRespons func error", err)
+		return err
+	}
+	// fmt.Printf("%v\n", transactionsData)
+	err = insertRows(db, transactionsData)
+	if err != nil {
+		log.Println("insert error", err)
+		return err
+	}
+
+	w.Write([]byte("Data insertion was successfully completed"))
+	return nil
+
 }
 
-func getResponse(url string, j []Transaction) ([]Transaction, error) {
-	client := http.Client{
-		Timeout: 6 * time.Second,
-	}
-	resp, err := client.Get(url)
-	if err != nil {
-		log.Println("request error", err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-	// io.Copy(os.Stdout, resp.Body)
+type Handler func(w http.ResponseWriter, r *http.Request) error
 
-	err = json.NewDecoder(resp.Body).Decode(&j)
-	if err != nil {
-		log.Println("decode error", err)
-		return nil, err
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := h(w, r); err != nil {
+		// handle returned error here.
+		w.WriteHeader(400)
+		w.Write([]byte(err.Error()))
 	}
-	return j, nil
 }
 
-func insertRows(db *sql.DB, transactionsData []Transaction) error {
+func insertRows(db *sql.DB, transactionsData []models.Transaction) error {
 	stmt := `INSERT INTO transactionsdata (uuid, type, date, amount, senderid, recipientid)
 	VALUES($1, $2, $3, $4, $5, $6)`
 	for _, tr := range transactionsData {
@@ -74,22 +75,14 @@ func insertRows(db *sql.DB, transactionsData []Transaction) error {
 }
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
-	db, err := sql.Open("postgres", psqlInfo)
-	if err != nil {
-		log.Println("db open error", err)
-	}
-	defer db.Close()
-
-	var j []Transaction
-	url := "http://127.0.0.1:8080/generate/transactions?count=3"
-	transactionsData, err := getResponse(url, j)
-	if err != nil {
-		log.Println("getRespons func error", err)
-	}
-	err = insertRows(db, transactionsData)
-	if err != nil {
-		log.Println("insert error", err)
-	}
+	port := ":3333"
+	log.Printf("сервер запущен на %s порту", port)
+	r := chi.NewRouter()
+	r.Method("GET", "/", Handler(customHandler))
+	http.ListenAndServe(port, r)
 }
+
+// err := headersCheck("http://127.0.0.1:8080/generate/transactions?count=3")
+// if err != nil {
+// 	log.Println("headersCheck func error", err)
+// }
