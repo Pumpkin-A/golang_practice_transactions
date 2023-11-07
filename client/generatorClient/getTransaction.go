@@ -1,6 +1,7 @@
 package generatorclient
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"go/transaction/client/models"
@@ -13,12 +14,13 @@ type errorJsonResponse struct {
 	Text string `json:"-_-"`
 }
 
-func GetResp(xUserHeader string) ([]models.Transaction, bool, error) {
+func GetResp(ctx context.Context) ([]models.Transaction, bool, error) {
 	client := http.Client{
 		Timeout: 6 * time.Second,
 	}
 	url := "http://127.0.0.1:8080/generate/transactions?count=2"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	xUserHeader := ctx.Value("X-User").(string)
 	req.Header.Set("X-User", xUserHeader)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -47,9 +49,9 @@ func GetResp(xUserHeader string) ([]models.Transaction, bool, error) {
 	return nil, true, nil
 }
 
-func GetTransaction(xUserHeader string) ([]models.Transaction, error) {
+func GetTransaction(ctx context.Context) ([]models.Transaction, error) {
 	for {
-		transactions, is503, err := GetResp(xUserHeader)
+		transactions, is503, err := GetResp(ctx)
 		if err != nil {
 			return nil, err
 		}
