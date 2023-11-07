@@ -17,8 +17,10 @@ type Transaction struct {
 
 type Config struct {
 	AvailableXUsers []string
+	ServerPort      string
 }
 
 var GlobalConfig = Config{
 	AvailableXUsers: []string{"Nastya", "Maxim", "clown"},
+	ServerPort:      ":8080",
 }
