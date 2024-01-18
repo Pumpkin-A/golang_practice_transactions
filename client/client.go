@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	generatorClient "go/transaction/client/generatorClient"
@@ -31,7 +32,9 @@ func customHandler(w http.ResponseWriter, r *http.Request) error {
 	}
 	defer db.Close()
 
-	transactionsData, err := generatorClient.GetTransaction(xUserHeader)
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, "X-User", xUserHeader)
+	transactionsData, err := generatorClient.GetTransaction(ctx)
 	if err != nil {
 		log.Println("getRespons func error", err)
 		return err
